@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Vue - CRUD - Endereço - Jogador - LocalStorage</title>
+        
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" />
+        <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+        <link rel="stylesheet" href="../1Trabalho_mapas.local/css/estilos.css" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.8/vue.js"></script>
+        <script src="https://unpkg.com/vuelidate@0.7.4/dist/vuelidate.min.js"></script>
+        <script src="https://unpkg.com/vuelidate@0.7.4/dist/validators.min.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+
+    </head> 
+    <body> 
+        <div class="container-fluid">
+           <h2>Formulários e LocalStorage</h2>
+           <div class="row">
+                <div class="col-xs-3">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li class="active"><a data-toggle="pill" href="#menu1">Local</a></li>
+                        <li><a data-toggle="pill" href="#menu2">Mapas/Local</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-9">
+                    <div class="tab-content" id="app">
+                        <!-- LOCAIS -->
+                        <div id="menu1" class="tab-pane fade in active">
+                            <h2>Listagem de Local</h2>   
+                            <table class="table table-striped" >
+                                <tr>
+                                    <th scope="col">Codigo</th>
+                                    <th scope="col">Nome</th>
+                                    <th scope="col">Situação</th>
+                                    <th scope="col">Alterar</th>
+                                    <th scope="col">Remover</th>
+                                </tr> 
+                                <tbody>
+                                    <tr v-for="(l, indice) in locais">                                                
+                                        <td>{{indice}}</td>
+                                <!--    <td>{{l.codigo}}</td>   -->
+                                        <td>{{l.nome}}</td>
+                                        <td v-if="l.situacao"><input type="checkbox" checked disabled></td>
+                                        <td v-if="!l.situacao"><input type="checkbox" disabled></td>
+                                        <td><button v-on:click="editLocal(indice)" class="btn" type="button">Alterar</button></td>
+                                        <td><button v-on:click="removeLocal(indice)" class="btn" type="button">Remover</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Fromulário Locais-->
+                            <form id="form_locais">     
+                                <h3>Formulário para cadastrar locais</h3>                   
+                                <div>
+                                    <!-- Input Codigo-->
+                                    <div class="form-group">
+                                        <label for="inputCodigo">#:</label>
+                                        <input type="text" v-model="novo_local.codigo" class="form-control" id="inputCodigo" disabled>
+                                    </div>
+
+                                    <!-- Input Nome -->
+                                    <div class="error" v-if="!$v.novo_local.nome.required">Nome deve ter no mínimo {{$v.novo_local.nome.$params.minLength.min}} caracteres.</div>
+                                    <div class="form-group">
+                                        <label for="form__label" for="inputNome">Nome:</label>
+                                        <input class="form__label" type="text" v-model.trim="$v.novo_local.nome.$model" :class="status($v.novo_local.nome)" id="inputNome">
+                                    </div>
+
+                                    <!-- Input Situação -->
+                                    <div class="form-group">
+                                        <label for="checkSituacao">Situação:</label>
+                                        <input type="checkbox" v-model="novo_local.situacao" id="checkSituacao"><!--Atividade 1 - Aplicar um input mais apropriado. -->
+                                    </div>
+                                    
+                                    <!-- Botões Local -->
+                                    <button @click="addlocal($v)" class="btn btn-primary" type="button">Salvar</button>
+                                    <button @click="cleanFormularioLocal" class="btn btn-primary" type="button">Limpar</button>                         
+                                </div>                                                                            
+                            </form>    
+                        </div>
+                            <!-- MAPAS -->
+                        <div id="menu2" class="tab-pane fade">
+                            <h2>Listagem de Mapas e locais do CS - LocalStorage</h2>   
+
+                            <table class="table table-striped" >
+                                    <tr>
+                                        <th scope="col">Codigo</th>
+                                        <th scope="col">Nome</th>
+                                        <th scope="col">Data Cadastro</th>
+                                        <th scope="col">Situação</th>                
+                                        <th scope="col">Alterar</th>
+                                        <th scope="col">Remover</th>
+                                    </tr>                     
+                                <tbody>
+                                    <tr v-for="(m, indice) in mapas">
+                                        <td>{{indice}}</td>                                                
+                                <!--    <td>{{m.codigo}}</td>   -->
+                                        <td>{{m.nome}}</td>
+                                        <td>{{m.data_cadastro | formataData}}</td>
+                                        
+                                        <td v-if="m.situacao"><input type="checkbox" checked disabled></td>
+                                        <td v-if="!m.situacao"><input type="checkbox" disabled></td>
+                                        
+                                        <td><button v-on:click="editMapas(indice)" class="btn" type="button">Alterar</button></td>
+                                        <td><button v-on:click="removeMapas(indice)" class="btn" type="button">Remover</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Formulário Mapas -->
+                            <form id="form_mapas">                        
+                                <h3>Formulário para cadastrar Mapas</h3>
+
+                                <!-- Input Codigo -->
+                                <div class="form-group">
+                                    <label for="inputCodigo">#:</label>
+                                    <input type="text" v-model="novo_mapa.codigo" class="form-control" id="inputCodigo" disabled>
+                                </div>
+
+                                <!-- Input Nome -->
+                                <div class="error" v-if="!$v.novo_mapa.nome.required">Nome deve ter no mínimo {{$v.novo_mapa.nome.$params.minLength.min}} caracteres.</div>
+                                <div class="form-group">
+                                    <label for="form__label" for="inputNome">Nome:</label>
+                                    <input class="form__label" type="text" v-model.trim="$v.novo_mapa.nome.$model" :class="status($v.novo_mapa.nome)" id="inputNome">
+                                </div>
+                                
+                                <!-- Input Dt Cadastro-->
+                                <div class="error" v-if="!$v.novo_mapa.data_cadastro.required">Informe uma data válida (anterior ou igual a data atual).</div>
+                                <div class="form-group">
+                                    <label class="form__label" for="inputDtCadastro">Data Cadastro:</label>
+                                    <input class="form__label" type="date" v-model="$v.novo_mapa.data_cadastro.$model" :class="status($v.novo_mapa.data_cadastro)" id="inputDtCadastro">
+                                </div>
+
+                                <!-- Input Situação -->
+                                <div class="form-group">
+                                    <label for="checkSituacao">Situação:</label>
+                                    <input type="checkbox" v-model="novo_mapa.situacao" id="checkSituacao"><!--Atividade 1 - Aplicar um input mais apropriado. -->
+                                </div>
+                                <!-- https://br.vuejs.org/v2/guide/forms.html -->
+
+                                <!-- Select para escolher Locais -->
+                                <div class="error" v-if="!$v.novo_mapa.locais.required">Selecione pelo menos um local.</div>
+                                <div class="form-group">
+                                    <label class="form__label" for="selectLocal"><a href="mapas.html">Locais:</a></label><br>
+                                    <select class="form_input" v-model="$v.novo_mapa.locais.$model" :class="status($v.novo_mapa.locais)" id="selectLocal" multiple>
+                                        <option disabled value="">Escolha os locais</option>
+                                        <option v-for="l in locais" v-bind:value="l">
+                                            {{ l.nome }}
+                                            </option>
+                                    </select>                                                                
+                                </div>
+                                 
+                                <!-- Botões Mapas-->
+                                <button @click="addMapas($v)" class="btn btn-primary" type="button">Salvar</button>
+                                <button @click="cleanFormularioMapas" class="btn btn-primary" type="button">Limpar</button>   
+                                                                                                            
+                            </form>  
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
+    <script type="text/javascript">
+
+    $(document).ready(function() {
+
+      var mapas = [];
+      //testa se existe o item jogadores no localStorage do navegador.
+      if(localStorage.getItem("mapas") == null){
+
+        //caso não exista cria o item jogadores.
+        localStorage.setItem("mapas" , JSON.stringify([]));
+                        
+      }else{
+        //se existir, realiza o parse e armazena na variável jogadores.
+        mapas = JSON.parse(localStorage.getItem("mapas"))
+      }
+
+      var locais = [];
+      //testa se existe o item locais no localStorage do navegador.
+      if(localStorage.getItem("locais") == null){
+
+        //caso não exista cria o item locais.
+        localStorage.setItem("locais" , JSON.stringify([]));
+
+      }else{
+         //se existir, realiza o parse e armazena na variável locais.
+        locais = JSON.parse(localStorage.getItem("locais"));
+      }
+
+      var dados = {
+            "locais": locais,
+            "novo_local" : {codigo: '', nome: '', situacao: true},
+            "mapas": mapas, 
+            "novo_mapa" : {codigo: '', nome: '', data_cadastro: '', situacao: true, locais: []}
+        };
+
+        Vue.use(window.vuelidate.default);
+
+        const{
+            required,
+            minLength,
+            minValue,
+            between
+        } = window.validators
+                  
+
+      Vue.filter('formataData', function (value) {                
+                //yyyy-mm-dd
+                var data = new Date(value);
+                data.setDate(data.getDate()+1); //incrementa a data em um dia para mostrar corretamente (pode nao ser necessário)              
+                dia  = (data.getDate()).toString().padStart(2, '0'),
+                mes  = (data.getMonth()+1).toString().padStart(2, '0'), //+1 pois no getMonth Janeiro começa com zero.                
+                ano  = data.getFullYear();                
+                return dia+"/"+mes+"/"+ano;                
+        });
+
+        //Vue Locais
+      new Vue({ 
+                el: '#menu1', 
+                data: dados,
+                validations: {
+                    novo_local: {
+                        nome: {
+                            required,
+                            minLength: minLength(3)
+                        },  
+                    }
+                },
+                methods: {
+
+                    isLetter(e) {
+                        let char = String.fromCharCode(e.keyCode); // Get the character
+                        if(/^[A-Za-z]+$/.test(char)) 
+                            return true; // Match with regex 
+                        else 
+                            e.preventDefault(); // If not match, don't add to input text
+                    },
+
+                    status(validation) {
+                        return {
+                            error: validation.$error,
+                            dirty: validation.$dirty
+                        }
+                    },
+
+                    addlocal: function (v) {
+                        if(!v.$invalid){
+
+                            var input_codigo = this.novo_local.codigo;  
+                            var input_nome = this.novo_local.nome.trim(); 
+                            var input_situacao = this.novo_local.situacao;
+                            
+                        
+                            //Atividade 5 - testar o tamanho do nome e senha. Não permitir tamanhos menores do que 4 para ambos.
+                            
+                           
+                            //documentação sobre o parseInt
+                            //https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/parseInt
+                            if(isNaN(parseInt(this.novo_local.codigo))){ 
+                                var proximo_codigo;
+                                if(this.locais.length == 0){
+                                    proximo_codigo = 1;
+                                }else{
+                                    proximo_codigo = (parseInt(this.locais[this.locais.length-1].codigo) + 1)
+                                }
+                                this.locais.push({
+                                    codigo: proximo_codigo, 
+                                    nome: input_nome, 
+                                    situacao: input_situacao}
+                                );
+
+                                
+                                alert('Novo local cadastrado !');
+
+                            }else{
+                           
+
+                                this.locais[this.novo_local.codigo] = {
+                                    codigo: input_codigo, 
+                                    nome: input_nome, 
+                                    situacao: input_situacao
+                                }; 
+                                alert('local alterado !');
+                                        
+                               
+                            }
+                            localStorage.setItem("locais" , JSON.stringify(this.locais));
+                            
+                            this.cleanFormularioLocal();
+
+                        }else{
+
+                            alert("Se liga MEU !!! Formulário Incompleto");
+                        }
+                    },   //Até aqui
+
+                    editLocal: function (param_index) {
+                        this.novo_local.codigo = param_index;
+                        //this.novo_local.codigo = this.locais[param_index].codigo;
+                        this.novo_local.nome = this.locais[param_index].nome; 
+                        this.novo_local.situacao = this.locais[param_index].situacao;                      
+                    },
+
+                    removeLocal: function(param_index){
+
+                        // Atividade 4 - Confirmar antes de remover
+                        
+                        //documentacao sobre o splice
+                        //https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/splice
+                        //remove 1 elemento do índice definido pela variavel param_index
+                        this.locais.splice(param_index, 1);
+
+                        localStorage.setItem("locais" , JSON.stringify(this.locais));
+
+                        alert('Removeu o local: ' + param_index);
+                    },
+                    
+                    cleanFormularioLocal: function() {
+                        this.novo_local.codigo = '';
+                        this.novo_local.nome = ''; 
+                        this.novo_local.situacao = true;
+                    },    
+                }   
+            });  
+           
+        // Vue Mapas
+        new Vue({ 
+            el: '#menu2', 
+            data: dados,
+            validations: {
+                novo_mapa: {
+                    nome: {
+                        required,
+                        minLength: minLength(3)
+                    },
+                    data_cadastro: {
+                        required,                                        
+                        minValue: value => value < new Date().toISOString()
+                    }, 
+                    locais: {
+                        required
+                    },  
+                }
+            },
+            methods: {
+
+                //https://br.vuejs.org/v2/cookbook/form-validation.html  
+                // validação de formulários “Automática”, 
+                //passo 3
+                isLetter(e) {
+                    let char = String.fromCharCode(e.keyCode); // Get the character
+                    if(/^[A-Za-z]+$/.test(char)) 
+                        return true; // Match with regex 
+                    else 
+                        e.preventDefault(); // If not match, don't add to input text
+                },
+
+                status(validation) {
+                    return {
+                        error: validation.$error,
+                        dirty: validation.$dirty
+                    }
+                },
+
+                addMapas: function (v) {
+                    var input_codigo = this.novo_mapa.codigo;  
+                    var input_nome = this.novo_mapa.nome.trim(); 
+                    var input_data_cadastro = this.novo_mapa.data_cadastro.trim();                         
+                    var input_situacao = this.novo_mapa.situacao;
+                    var select_locais = this.novo_mapa.locais;
+
+                    //Atividade 5 - testar o tamanho do nome e senha. Não permitir tamanhos menores do que 4 para ambos.
+                    if (!v.$invalid) {
+                            
+                        //documentação sobre o parseInt
+                        //https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/parseInt
+                        if(isNaN(parseInt(input_codigo))){
+                            this.mapas.push({
+                                nome: input_nome, 
+                                data_cadastro: input_data_cadastro, 
+                                situacao: input_situacao, 
+                                locais: select_locais
+                            });
+                            alert('Novo mapas cadastrado !');
+
+                        }else{
+                            this.mapas[input_codigo] = {
+                                nome: input_nome, 
+                                data_cadastro: input_data_cadastro, 
+                                situacao: input_situacao, 
+                                locais: select_locais
+                            };
+                            alert('Mapa alterado !');
+
+                        }
+                        localStorage.setItem("mapas" , JSON.stringify(this.mapas));
+                        this.cleanFormularioMapas();
+
+                    }else{
+                        alert("Se liga meu!!! Formulário Incompleto");
+                    }
+                },
+
+                editMapas: function (param_index) {
+                    this.novo_mapa.codigo = param_index;
+                    this.novo_mapa.nome = this.mapas[param_index].nome; 
+                    this.novo_mapa.data_cadastro = this.mapas[param_index].data_cadastro;
+                    this.novo_mapa.situacao = this.mapas[param_index].situacao;
+                    this.novo_mapa.locais = this.mapas[param_index].locais;
+                },
+
+                removeMapas: function(param_index){
+                        
+                    //documentacao sobre o splice
+                    //https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/splice
+                    //remove 1 elemento do índice definido pela variavel param_index
+                    this.mapas.splice(param_index, 1);
+                    localStorage.setItem("mapas" , JSON.stringify(this.mapas));
+
+                    alert('Removeu o mapa: ' + param_index);
+                },
+
+                cleanFormularioMapas: function() {
+
+                    this.novo_mapa.codigo = '';
+                    this.novo_mapa.nome = ''; 
+                    this.novo_mapa.data_cadastro = '';
+                    this.novo_mapa.situacao = true;
+                    this.novo_mapa.locais = [];
+                },
+
+            }
+        });
+    });
+
+    // Pq o select não pegar formatação
+    // Pq quando ele atualiza ele não vem verde ?
+    // pq quando atualiza ele volta para a pag locais ? ta certo ?
+    // como posso mostrar os locais ??
+
+    </script>
+</html>
